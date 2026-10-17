@@ -264,13 +264,17 @@ Stable `vX.Y.Z` tags are supported; prerelease tags are rejected. Validation
 failures create no release. Rerunning a successful workflow can replace assets on
 an existing draft, but refuses to modify a published release. The draft workflow
 uses GitHub's built-in token; only its final job receives `contents: write`.
-Publishing the reviewed GitHub release triggers the separate Thunderstore and
-Nexus Mods workflows when their respective `THUNDERSTORE_PUBLISH_ENABLED` and
-`NEXUSMODS_PUBLISH_ENABLED` repository variables are `true`. Both consume the
-exact reviewed GitHub archive without rebuilding. Nexus 1.1.0 was published
-manually; automation only accepts later stable versions. See
-[Thunderstore publishing and retries](THUNDERSTORE.md)
-and [Nexus Mods configuration, preflight, and recovery](NEXUSMODS.md).
+Publishing the reviewed GitHub release triggers the separate Thunderstore,
+Nexus Mods, and Hexium workflows when their respective
+`THUNDERSTORE_PUBLISH_ENABLED`, `NEXUSMODS_PUBLISH_ENABLED`, and
+`HEXIUM_PUBLISH_ENABLED` repository variables are `true`. All three upload the
+exact reviewed GitHub archive without rebuilding. Hexium verifies downloaded
+file contents while allowing its documented BepInEx manifest normalization.
+Nexus 1.1.0 was published manually; its automation only accepts later stable
+versions. See
+[Thunderstore publishing and retries](THUNDERSTORE.md),
+[Nexus Mods configuration, preflight, and recovery](NEXUSMODS.md), and
+[Hexium configuration, preflight, and recovery](HEXIUM.md).
 GitHub workflows do not bump versions, create tags, or publish drafts automatically.
 
 To exercise release validation and packaging locally without creating or
@@ -332,9 +336,9 @@ A release with download and publishing changes could instead use:
 These category names are examples; choose headings that describe each release.
 Keep any release title above the sections and the comparison link after them.
 The checked-in notes provide the GitHub release body and the packaged
-`CHANGELOG.md` used by Thunderstore. Nexus converts those notes to plain entries
-while preserving the chosen category names and order, joining wrapped bullets,
-and pinning links to the release tag.
+`CHANGELOG.md` used by Thunderstore and Hexium. Nexus converts those notes to
+plain entries while preserving the chosen category names and order, joining
+wrapped bullets, and pinning links to the release tag.
 
 ## Project structure
 
