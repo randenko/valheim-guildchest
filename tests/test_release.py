@@ -5,8 +5,9 @@ import sys
 import tempfile
 import unittest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
-from check_release import check_release
+PROJECT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT / 'scripts'))
+from check_release import check_release, check_release_notes
 
 
 class ReleaseTests(unittest.TestCase):
@@ -21,7 +22,9 @@ class ReleaseTests(unittest.TestCase):
         self.git('update-ref', 'refs/remotes/origin/main', 'HEAD')
         self.notes = self.root / 'docs/releases/v1.2.3.md'
         self.notes.parent.mkdir(parents=True)
-        self.notes.write_text('## Mod changes\n\n- A mod fix.\n\n## Other changes\n\n- A build fix.\n')
+        self.notes.write_text('## Mod changes\n\n- A mod fix.\n\n'
+                              '## Steam reference recovery\n\n- Recover incomplete downloads.\n\n'
+                              '## Contributor documentation\n\n- Explain the development setup.\n')
 
     def git(self, *arguments):
         return subprocess.run(['git', *arguments], cwd=self.root, capture_output=True,
@@ -62,24 +65,56 @@ class ReleaseTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Missing release notes'):
             check_release('v1.2.3', '1.2.3', self.root)
 
-    def test_uncategorized_or_reordered_release_notes_are_rejected(self):
-        for notes in ('## What changed\n\n- A fix.\n',
-                      '## Other changes\n\n- A fix.\n\n## Mod changes\n\n- A fix.\n',
-                      '## Mod changes\n\n- A fix.\n',
-                      '## Mod changes\n\n- A fix.\n\n## Other changes\n\n- A fix.\n\n## More changes\n'):
-            with self.subTest(notes=notes), self.assertRaisesRegex(ValueError, 'Mod changes followed by'):
+    def test_missing_or_misplaced_mod_changes_are_rejected(self):
+        for notes in ('', '# Changes\n\n- A fix.\n', '## What changed\n\n- A fix.\n',
+                      '## Publishing\n\n- A fix.\n\n## Mod changes\n\n- A fix.\n'):
+            with self.subTest(notes=notes), self.assertRaisesRegex(ValueError, 'must start with ## Mod changes'):
                 self.notes.write_text(notes)
                 check_release('v1.2.3', '1.2.3', self.root)
 
-    def test_sections_without_bullets_are_rejected(self):
-        for mod, other in (('', '- A build fix.'), ('- A mod fix.', ''), ('- ', '- A build fix.')):
-            with self.subTest(mod=mod, other=other), self.assertRaisesRegex(ValueError, 'needs at least one bullet'):
-                self.notes.write_text(f'## Mod changes\n\n{mod}\n\n## Other changes\n\n{other}\n')
+    def test_categories_are_optional_and_their_names_and_order_follow_the_release(self):
+        for categories in ((), ('Steam reference recovery',),
+                           ('Steam reference recovery', 'Contributor documentation'),
+                           ('Contributor documentation', 'Steam reference recovery')):
+            with self.subTest(categories=categories):
+                self.notes.write_text('# Guild Chest 1.2.3\n\n## Mod changes\n\n- A mod fix.\n' +
+                                      ''.join(f'\n## {category}\n\n- A related change.\n' for category in categories))
+                self.assertEqual(check_release('v1.2.3', '1.2.3', self.root), '1.2.3')
+
+    def test_duplicate_categories_are_rejected(self):
+        for categories in (('Mod changes',), ('mod CHANGES',),
+                           ('Steam reference recovery', 'Steam reference recovery'),
+                           ('Steam reference recovery', ' steam REFERENCE recovery \t')):
+            with self.subTest(categories=categories), self.assertRaisesRegex(ValueError, 'Duplicate release notes category'):
+                self.notes.write_text('## Mod changes\n\n- A mod fix.\n' +
+                                      ''.join(f'\n## {category}\n\n- A related change.\n' for category in categories))
                 check_release('v1.2.3', '1.2.3', self.root)
 
-    def test_explicit_no_changes_bullets_are_accepted(self):
+    def test_blank_category_headings_are_rejected(self):
+        for heading in ('##', '## ', '## \t '):
+            with self.subTest(heading=heading), self.assertRaisesRegex(ValueError, 'headings must not be empty'):
+                self.notes.write_text(f'## Mod changes\n\n- A mod fix.\n\n{heading}\n\n- A build fix.\n')
+                check_release('v1.2.3', '1.2.3', self.root)
+
+    def test_sections_without_bullets_are_rejected(self):
+        for mod, tooling in (('', '- A build fix.'), ('- A mod fix.', ''),
+                             ('- ', '- A build fix.'), ('- A mod fix.', 'Plain text without a bullet.')):
+            with self.subTest(mod=mod, tooling=tooling), self.assertRaisesRegex(ValueError, 'needs at least one bullet'):
+                self.notes.write_text(f'## Mod changes\n\n{mod}\n\n## Steam reference recovery\n\n{tooling}\n')
+                check_release('v1.2.3', '1.2.3', self.root)
+
+    def test_mod_changes_with_explicit_none_are_accepted(self):
+        self.notes.write_text('## Mod changes\n\n- None.\n')
+        self.assertEqual(check_release('v1.2.3', '1.2.3', self.root), '1.2.3')
+
+    def test_legacy_other_changes_category_remains_accepted(self):
         self.notes.write_text('## Mod changes\n\n- None.\n\n## Other changes\n\n- None.\n')
         self.assertEqual(check_release('v1.2.3', '1.2.3', self.root), '1.2.3')
+
+    def test_existing_release_notes_remain_valid(self):
+        for notes in sorted((PROJECT / 'docs/releases').glob('v*.md')):
+            with self.subTest(tag=notes.stem):
+                check_release_notes(notes.stem, PROJECT)
 
 
 if __name__ == '__main__':

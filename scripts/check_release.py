@@ -15,14 +15,22 @@ def check_release_notes(tag, repository=ROOT):
     if not path.is_file():
         raise ValueError(f'Missing release notes: docs/releases/{tag}.md.')
     notes = path.read_text(encoding='utf-8')
-    headings = list(re.finditer(r'^## (.+)$', notes, re.MULTILINE))
-    if [heading.group(1) for heading in headings] != ['Mod changes', 'Other changes']:
-        raise ValueError('Release notes must have ## Mod changes followed by ## Other changes.')
-    for index, heading in enumerate(headings):
+    headings = list(re.finditer(r'^##(?:[ \t]+(.*))?$', notes, re.MULTILINE))
+    names = [(heading.group(1) or '').strip() for heading in headings]
+    if not names or names[0] != 'Mod changes':
+        raise ValueError('Release notes must start with ## Mod changes.')
+    seen = set()
+    for index, (heading, name) in enumerate(zip(headings, names)):
+        if not name:
+            raise ValueError('Release notes category headings must not be empty.')
+        if name.casefold() in seen:
+            raise ValueError(f'Duplicate release notes category: {name}.')
+        seen.add(name.casefold())
         end = headings[index + 1].start() if index + 1 < len(headings) else len(notes)
         section = notes[heading.end():end]
         if not re.search(r'^- \S', section, re.MULTILINE):
-            raise ValueError(f'Release notes section {heading.group(1)} needs at least one bullet (use - None. if empty).')
+            raise ValueError(f'Release notes section {name} needs at least one bullet '
+                             '(use - None. for Mod changes or omit an unused category).')
 
 
 def check_release(tag, version, repository=ROOT):

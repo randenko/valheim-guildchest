@@ -49,7 +49,8 @@ keys in command arguments, logs, committed files, or chat messages.
    procedure. Publishing it triggers both distribution workflows independently.
    A bugfix can use 1.1.1 and a feature can use 1.2.0; this change does not bump
    `manifest.json` or reserve the next version. Document these tooling changes
-   under **Other changes** in that release's notes.
+   under a broad category that groups related changes in that release,
+   following the [release-note authoring guidelines](DEVELOPMENT.md#writing-release-notes).
 5. Check the Nexus result and test Vortex update detection from 1.1.0. Confirm
    both Guild Chest DLLs, dependencies, and a short chest interaction in a
    disposable world. The owner's earlier Vortex archive installation test is
@@ -120,8 +121,11 @@ helper leaves those page requirements alone. If dependency requirements need to
 change in a later release, review the Nexus declarations alongside the tagged
 manifest before publishing.
 
-Changelogs preserve **Mod changes** and **Other changes** from the tagged release
-notes. Wrapped Markdown bullets become entries; links point at the release tag.
+Changelogs preserve **Mod changes** and all release-specific category headings
+from the tagged release notes, in their original order. Additional categories
+group related changes under broad headings chosen for each release. Historical
+**Other changes** sections are also preserved. Wrapped Markdown bullets become
+entries; links point at the release tag.
 The helper skips matching notes, appends missing notes once, and fails on
 conflicting or partial notes. The official action does not submit the changelog,
 so recovering file publication does not append a duplicate automatically.

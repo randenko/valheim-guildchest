@@ -45,7 +45,10 @@ class PackageTests(unittest.TestCase):
         (self.root / 'manifest.json').write_text(json.dumps(self.manifest))
         notes = self.root / f'docs/releases/v{version}.md'
         notes.parent.mkdir(parents=True, exist_ok=True)
-        notes.write_text(f'# Guild Chest {version}\n\n## Mod changes\n\n- A fix.\n\n## Other changes\n\n- Enjoying the mod? [Buy me a coffee](https://ko-fi.com/randenko) as an optional thank-you.\n')
+        notes.write_text(f'# Guild Chest {version}\n\n## Mod changes\n\n- A fix.\n\n'
+                         '## Build verification\n\n- Verify release binaries before packaging.\n\n'
+                         '## Community support\n\n- Enjoying the mod? '
+                         '[Buy me a coffee](https://ko-fi.com/randenko) as an optional thank-you.\n')
 
     def write_receipt(self, version='1.2.3'):
         receipt = ET.Element('build', version=version)
@@ -121,7 +124,7 @@ class PackageTests(unittest.TestCase):
         notes.unlink()
         self.assert_rejected('Missing release notes')
         notes.write_text('# Changes\n\n- A fix.\n')
-        self.assert_rejected('Mod changes followed by')
+        self.assert_rejected('must start with ## Mod changes')
 
     def test_changed_manifest_rejects_old_build(self):
         (self.root / 'manifest.json').write_text(json.dumps({'version_number': '9.9.9'}))

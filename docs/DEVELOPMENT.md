@@ -237,13 +237,11 @@ NuGet packages and pinned GitHub Actions; updates require review and passing CI.
 To release a new version:
 
 1. Update `version_number` in `manifest.json`, update the relevant documentation,
-   and write `docs/releases/vX.Y.Z.md` with `## Mod changes` first and
-   `## Other changes` second. Put player-facing behavior, visuals, fixes, and
-   compatibility in Mod changes; put tooling, CI, documentation, and development
-   environment changes in Other changes. Include at least one bullet per section,
-   using `- None.` when a category has no changes. Review changes since the previous
-   release and include a comparison link after the sections. Commit the notes
-   and merge the change into `main` after CI and relevant gameplay checks pass.
+   and write `docs/releases/vX.Y.Z.md` using the
+   [release-note authoring guidelines](#writing-release-notes). Review changes
+   since the previous release and include a comparison link after the sections.
+   Commit the notes and merge the change into `main` after CI and relevant
+   gameplay checks pass.
 2. Tag the merged commit with the exact manifest version and push that tag:
 
    ```bash
@@ -253,9 +251,10 @@ To release a new version:
 
 3. The **Release** workflow invokes the NUKE `Release` target, which verifies
    that the tag is exactly `v<manifest version>` and its commit belongs to
-   `main`, and checks that the release notes have both sections in order with
-   a bullet in each. It reruns tests, downloads fresh references
-   without using reference or NuGet caches, builds Debug, and packages Release.
+   `main`, and checks that the release notes start with Mod changes, have unique,
+   nonempty category headings, and include a bullet in each section. It reruns
+   tests, downloads fresh references without using reference or NuGet caches,
+   builds Debug, and packages Release.
 4. After validation succeeds, it creates a **draft GitHub release** containing
    the checked-in release notes, the installable ZIP, and a `.zip.sha256` checksum.
    Review the notes, package, reference build, and relevant gameplay results,
@@ -280,6 +279,61 @@ publishing a GitHub release:
 ```bash
 dotnet run --project build -- --target Release --release-tag v1.1.0
 ```
+
+### Writing release notes
+
+Review the changes between the previous release tag and the proposed release
+commit. Write the notes in `docs/releases/vX.Y.Z.md` and keep **Mod changes** as
+the first `##` section. Include player-facing behavior, visuals, fixes, and
+compatibility there; use `- None.` when there are no player-facing changes.
+
+Group the remaining changes into a small number of broad, descriptive `##`
+categories based on their actual subjects. Related changes should share a
+heading, with the individual details in separate bullets. Prefer headings that
+can cover several related changes, such as **Development tooling** or
+**Publishing**, over a heading for every individual change. A narrower category
+containing a single change is appropriate when its subject is substantially
+different from the other changes and deserves a separate heading.
+
+Only **Mod changes** is predefined. Additional categories and their order come
+from the changes being described; omit unused categories. Each included section
+needs at least one `- ` bullet. Category names must be nonempty and unique,
+ignoring case and surrounding whitespace. Use meaningful subject categories in
+new notes instead of the **Other changes** catchall. Existing published notes
+retain their content and remain valid.
+
+A release limited to a player-facing fix can contain only:
+
+```markdown
+## Mod changes
+
+- Fix shared chest contents failing to refresh after a transfer.
+```
+
+A release with download and publishing changes could instead use:
+
+```markdown
+## Mod changes
+
+- None.
+
+## Development tooling
+
+- Recover incomplete reference installations before compiling.
+- Refresh game references when the development container starts.
+
+## Publishing
+
+- Verify the published archive before uploading it to distribution sites.
+- Preserve dependency requirements when recovering an interrupted upload.
+```
+
+These category names are examples; choose headings that describe each release.
+Keep any release title above the sections and the comparison link after them.
+The checked-in notes provide the GitHub release body and the packaged
+`CHANGELOG.md` used by Thunderstore. Nexus converts those notes to plain entries
+while preserving the chosen category names and order, joining wrapped bullets,
+and pinning links to the release tag.
 
 ## Project structure
 
