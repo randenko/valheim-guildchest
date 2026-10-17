@@ -53,7 +53,9 @@ class ThunderstoreTests(unittest.TestCase):
         self.root = Path(self.directory.name)
         self.manifest = json.loads((PROJECT / 'manifest.json').read_text())
         self.manifest['version_number'] = '1.2.3'
-        self.notes = '# Guild Chest 1.2.3\n\n## Mod changes\n\n- A fix.\n\n## Other changes\n\n- A build fix.\n'
+        self.notes = ('# Guild Chest 1.2.3\n\n## Mod changes\n\n- A fix.\n\n'
+                      '## Steam reference recovery\n\n- Recover incomplete downloads.\n\n'
+                      '## Contributor documentation\n\n- Explain the development setup.\n')
         (self.root / 'manifest.json').write_text(json.dumps(self.manifest))
         notes = self.root / 'docs/releases/v1.2.3.md'
         notes.parent.mkdir(parents=True)
@@ -149,6 +151,8 @@ sys.exit(int(os.environ.get('GUILDCHEST_FAKE_CLI_EXIT', '0')))
         self.assertIn('/c/valheim/p/Paper_Street_Software/GuildChest/', message)
         recorded = json.loads(self.trace.read_text())
         self.assertEqual(bytes.fromhex(recorded['archive']), self.contents)
+        with zipfile.ZipFile(io.BytesIO(bytes.fromhex(recorded['archive']))) as archive:
+            self.assertEqual(archive.read('CHANGELOG.md').decode(), self.notes)
         self.assertEqual(recorded['args'][0], 'publish')
         self.assertNotIn('--token', recorded['args'])
         self.assertTrue(recorded['token_present'])

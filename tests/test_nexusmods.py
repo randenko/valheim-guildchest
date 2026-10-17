@@ -142,7 +142,8 @@ class NexusTests(unittest.TestCase):
         self.release = ReleaseAssets('v1.2.3', manifest, 'GuildChest-1.2.3.zip', contents,
                                      hashlib.sha256(contents).hexdigest(),
                                      '# Guild Chest 1.2.3\n\n## Mod changes\n\n- A fix with\n  wrapped text.\n\n'
-                                     '## Other changes\n\n- Read the [guide](../DEVELOPMENT.md).\n')
+                                     '## Release verification\n\n- Verify the published archive.\n\n'
+                                     '## Contributor documentation\n\n- Read the [guide](../DEVELOPMENT.md).\n')
         self.api, self.github = FakeNexus(self.release), FakeGithub()
 
     def prepare(self):
@@ -539,9 +540,12 @@ class NexusTests(unittest.TestCase):
 
     def test_changelog_preserves_sections_wraps_bullets_and_pins_links(self):
         text = nexus.changelog(self.release)
-        self.assertEqual(text.splitlines()[:3], ['Mod changes', 'A fix with wrapped text.', 'Other changes'])
-        self.assertIn('blob/v1.2.3/docs/releases/../DEVELOPMENT.md', text)
-        self.assertNotIn('[guide]', text)
+        self.assertEqual(text.splitlines(), [
+            'Mod changes', 'A fix with wrapped text.',
+            'Release verification', 'Verify the published archive.',
+            'Contributor documentation',
+            'Read the guide (https://github.com/randenko/valheim-guildchest/blob/v1.2.3/docs/releases/../DEVELOPMENT.md).',
+        ])
 
     def test_cli_rejects_baseline_prepare_before_loading_or_writing(self):
         environment = {'NEXUSMODS_MOD_ID': TARGET.mod_id, 'NEXUSMODS_FILE_ID': TARGET.file_id,

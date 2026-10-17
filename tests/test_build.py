@@ -59,7 +59,9 @@ class BuildTests(unittest.TestCase):
         (self.root / 'manifest.json').write_text('{"version_number":"1.2.3"}\n')
         notes = self.root / 'docs/releases/v1.2.3.md'
         notes.parent.mkdir(parents=True)
-        notes.write_text('## Mod changes\n\n- None.\n\n## Other changes\n\n- A build fix.\n')
+        notes.write_text('## Mod changes\n\n- None.\n\n'
+                         '## Steam reference recovery\n\n- Recover incomplete downloads.\n\n'
+                         '## Contributor documentation\n\n- Explain the development setup.\n')
         (self.root / 'scripts').mkdir()
         shutil.copyfile(PROJECT / 'scripts/check_release.py', self.root / 'scripts/check_release.py')
         self.git('init', '--initial-branch=main')
