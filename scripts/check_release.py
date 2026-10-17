@@ -17,6 +17,8 @@ def check_release_notes(tag, repository=ROOT):
     notes = path.read_text(encoding='utf-8')
     headings = list(re.finditer(r'^##(?:[ \t]+(.*))?$', notes, re.MULTILINE))
     names = [(heading.group(1) or '').strip() for heading in headings]
+    if any(re.search(r'(?:^|[ \t])#+$', name) for name in names):
+        raise ValueError('Release notes category headings must not use closing # markers.')
     if not names or names[0] != 'Mod changes':
         raise ValueError('Release notes must start with ## Mod changes.')
     seen = set()

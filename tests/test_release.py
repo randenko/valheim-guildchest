@@ -75,7 +75,7 @@ class ReleaseTests(unittest.TestCase):
     def test_categories_are_optional_and_their_names_and_order_follow_the_release(self):
         for categories in ((), ('Steam reference recovery',),
                            ('Steam reference recovery', 'Contributor documentation'),
-                           ('Contributor documentation', 'Steam reference recovery')):
+                           ('Contributor documentation', 'Steam reference recovery'), ('C#',)):
             with self.subTest(categories=categories):
                 self.notes.write_text('# Guild Chest 1.2.3\n\n## Mod changes\n\n- A mod fix.\n' +
                                       ''.join(f'\n## {category}\n\n- A related change.\n' for category in categories))
@@ -94,6 +94,16 @@ class ReleaseTests(unittest.TestCase):
         for heading in ('##', '## ', '## \t '):
             with self.subTest(heading=heading), self.assertRaisesRegex(ValueError, 'headings must not be empty'):
                 self.notes.write_text(f'## Mod changes\n\n- A mod fix.\n\n{heading}\n\n- A build fix.\n')
+                check_release('v1.2.3', '1.2.3', self.root)
+
+    def test_closing_heading_markers_cannot_disguise_empty_or_duplicate_categories(self):
+        for notes in ('## Mod changes ##\n\n- A mod fix.\n',
+                      '## Mod changes\n\n- A mod fix.\n\n## Publishing\n\n- A fix.\n\n'
+                      '## Publishing ##\n\n- Another fix.\n',
+                      '## Mod changes\n\n- A mod fix.\n\n## ###\n\n- A fix.\n',
+                      '## Mod changes\n\n- A mod fix.\n\n## Publishing ## \t\n\n- A fix.\n'):
+            with self.subTest(notes=notes), self.assertRaisesRegex(ValueError, 'closing # markers'):
+                self.notes.write_text(notes)
                 check_release('v1.2.3', '1.2.3', self.root)
 
     def test_sections_without_bullets_are_rejected(self):

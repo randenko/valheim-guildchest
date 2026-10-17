@@ -298,7 +298,8 @@ different from the other changes and deserves a separate heading.
 Only **Mod changes** is predefined. Additional categories and their order come
 from the changes being described; omit unused categories. Each included section
 needs at least one `- ` bullet. Category names must be nonempty and unique,
-ignoring case and surrounding whitespace. Use meaningful subject categories in
+ignoring case and surrounding whitespace. Write headings as `## Category name`
+without closing `#` markers. Use meaningful subject categories in
 new notes instead of the **Other changes** catchall. Existing published notes
 retain their content and remain valid.
 
