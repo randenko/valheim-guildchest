@@ -6,6 +6,24 @@ provenance is recorded locally in `.local/references.json`; the publication reco
 below identifies the newer release build. A successful compile checks assembly
 compatibility; runtime behavior on newer builds needs separate verification.
 
+## Hexium publishing preparation (2026-10-17)
+
+- GitHub has `HEXIUM_NAMESPACE=randenko`, `HEXIUM_PUBLISH_ENABLED=false`, and
+  the `HEXIUM_API_TOKEN` secret. Only presence and public variable values were
+  inspected; no secret value was retrieved. Existing Thunderstore and Nexus
+  publishing switches were left unchanged.
+- Live GET-only preflight for v1.1.0 passes using the published GitHub archive
+  with SHA-256
+  `133b8fe196e45c49fc0d984d07b9f948a070ca25557fe4b7eab8baa70bf7dbf3`.
+  Hexium has active BepInExPack Valheim 5.4.2351 and Jötunn 2.30.2 versions,
+  and Building, Storage, Quality of Life, and Open Source categories.
+- Regression tests cover the shared release checks, disabled publishing,
+  GET-only preflight, exact outgoing ZIP bytes, manifest normalization, changed
+  DLLs and other files, invalid categories/dependencies, credential isolation,
+  delayed visibility, CLI errors/timeouts, unfinished metadata, version-specific
+  scans, and retry recovery. The [Hexium runbook](HEXIUM.md) records launch and
+  clean Gale profile/gameplay checks; those results remain pending publication.
+
 ## Nexus Mods publishing preparation (2026-10-17)
 
 - The owner manually published Guild Chest 1.1.0 at

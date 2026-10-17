@@ -1,4 +1,4 @@
-"""Read and validate the exact published GitHub assets shared by both publishers."""
+"""Read and validate the exact published GitHub assets shared by the publishers."""
 from dataclasses import dataclass
 import hashlib
 import io
