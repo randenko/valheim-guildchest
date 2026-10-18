@@ -7,6 +7,12 @@ published. Both Nexus and Thunderstore consume the exact GitHub ZIP and checksum
 neither publisher rebuilds or repackages it. Nexus writes for 1.1.0 and earlier
 versions are rejected in the helper, including manual retry mode.
 
+**The main mod-page description and images must be updated manually.** A
+successful publishing run updates the download and release metadata, but does
+not synchronize the Description tab with the README or saved BBCode. Complete
+the [manual page checklist](#manual-page-updates-after-a-release) after each
+release, including the [1.1.1 updates](#page-updates-for-111).
+
 Publishing is gated by `NEXUSMODS_PUBLISH_ENABLED`. Keep it `false` until the
 authenticated baseline preflight passes from `main`; read-only manual preflight
 is available while publishing is disabled.
@@ -57,12 +63,72 @@ keys in command arguments, logs, committed files, or chat messages.
    complete; the first automated upload and Nexus-associated Vortex update have
    not yet been exercised.
 
-The original [main-page BBCode](nexusmods/page-description.bbcode) and
-[launch field text](nexusmods/launch-fields.md) remain available for manual page
-maintenance. The README and saved [YouTube description](media/youtube-description.txt)
+The [main-page BBCode](nexusmods/page-description.bbcode) is the maintained copy
+for manual page updates. The [1.1.0 launch fields](nexusmods/launch-fields.md)
+are a historical record; their version, file description, and initial changelog
+are not instructions for later releases. The README and saved
+[YouTube description](media/youtube-description.txt)
 now include the verified Nexus URL. Applying the new link to the live video
 remains manual. The publisher does not edit page copy, images, permissions, or
 previously published GitHub archives.
+
+## Manual page updates after a release
+
+Review the page whenever a release changes behavior, compatibility, dependencies,
+installation, links, or media. Update the saved BBCode alongside the README
+before tagging, then apply it to Nexus after publication. Editing these files
+in Git does not update the live page; rerunning the publisher does not apply them.
+
+| Nexus field or area | How it is maintained | What to check |
+| --- | --- | --- |
+| Main description on the Description tab | Manual: replace its BBCode with [page-description.bbcode](nexusmods/page-description.bbcode). | Current release text/link, features, recipe, installation, configuration, supported game/mod versions, validation claims, download links, and troubleshooting. |
+| Short summary | Manual, when the feature summary changes. | The [launch summary](nexusmods/launch-fields.md#summary) still describes 1.1.1 and can be retained. |
+| Images, cover, and any separate icon/thumbnail | Manual upload and selection. | Use the current [presentation images and captions](media/README.md) and root [icon.png](../icon.png) where an icon is used. The ZIP's icon does not replace page media. |
+| Dependency declarations | Review manually when dependencies change. | The publisher preserves the previous file's declarations; it does not derive new declarations from `manifest.json`. Keep the Nexus requirements and description aligned with the released manifest. |
+| Credits, permissions, support/source links, video, and pinned support post | Manual, when their content changes. | Keep the MIT license, media disclosure, and GitHub Issues instructions accurate. |
+| Main-file ZIP, file name/version/description, primary download, and page version | Automated by the publishing workflow. | Verify the new version and download in the Actions summary and on the Files tab. The action's `description` input is the **uploaded file version's description**, not the main description. |
+| Release changelog | Automated from the tagged `docs/releases/vX.Y.Z.md`. | Verify the entries and categories; use [recovery](#preflight-and-retries) if incomplete. |
+
+The distinction between file description and page description is documented in
+the pinned official action's
+[inputs](https://github.com/Nexus-Mods/upload-action/blob/98532f7670c27cbecc78fae03fa3e278147827e2/action.yml).
+
+### Page updates for 1.1.1
+
+Apply these changes to [Guild Chest on Nexus Mods](https://www.nexusmods.com/valheim/mods/4476)
+using the owning account's page editor:
+
+1. In the main description's BBCode/source editor, paste the complete maintained
+   [page-description.bbcode](nexusmods/page-description.bbcode). It now includes:
+
+   - **Current release 1.1.1:** the Valheim 1.0.20 shared-storage/transfer fix,
+     continued support for older saved contents, and a direct link to the
+     [1.1.1 release notes](releases/v1.1.1.md).
+   - **Compatibility:** AzuCraftyBoxes **1.8.27 and 1.8.28**, including the new
+     Cookables group and individual item overrides; current native checks on
+     **Valheim 1.0.20**, with 1.0.16 results clearly identified as historical.
+     Historical Vortex installation evidence stays in the
+     [validation record](VALIDATION.md#nexus-mods-publishing-preparation-2026-10-17).
+     Add installation/update test claims only for the version actually tested.
+   - **Downloads:** Hexium alongside Thunderstore and GitHub Releases.
+2. Replace the old cover with
+   [docs/media/presentation/01_cover.png](media/presentation/01_cover.png),
+   showing the chest facing forward, and select it as the page cover. Use the
+   caption **One world. One shared stash.** Review the other three gallery
+   images against the [media table](media/README.md). Where a separate icon is
+   used, replace the old artwork with the emerald-and-gold crest in
+   [icon.png](../icon.png).
+3. Retain the short summary, recipe, configuration, and dependency versions:
+   **BepInExPack Valheim 5.4.2351** and **Jötunn 2.30.2**. AzuCraftyBoxes and
+   AzuAutoStore remain optional; do not add them as required dependencies.
+4. Verify the automated fields: page version **1.1.1**, primary main file
+   **Guild Chest 1.1.1**, preserved requirements, and the categorized **1.1.1**
+   changelog. Do not reuse the 1.1.0 launch file text or initial changelog.
+5. Preview and save the description, then reload the public Description and
+   Images tabs. Check BBCode rendering, release/download links, compatibility
+   text, and cover selection. Record the release tag and date in the release
+   PR or validation record after applying the live edits. Record any Vortex
+   update test separately from the description/media check.
 
 ## Automated behavior
 

@@ -254,6 +254,9 @@ To release a new version:
    and write `docs/releases/vX.Y.Z.md` using the
    [release-note authoring guidelines](#writing-release-notes). Review changes
    since the previous release and include a comparison link after the sections.
+   Update the [Nexus main-page BBCode](nexusmods/page-description.bbcode) for
+   changed release details, compatibility, requirements, links, and media using
+   the [manual page checklist](NEXUSMODS.md#manual-page-updates-after-a-release).
    Commit the notes and merge the change into `main` after CI and relevant
    gameplay checks pass.
 2. Tag the merged commit with the exact manifest version and push that tag:
@@ -273,6 +276,13 @@ To release a new version:
    the checked-in release notes, the installable ZIP, and a `.zip.sha256` checksum.
    Review the notes, package, reference build, and relevant gameplay results,
    then publish the draft from GitHub's Releases page.
+5. Verify the distribution workflows and apply the
+   [manual Nexus page updates](NEXUSMODS.md#manual-page-updates-after-a-release).
+   Paste the maintained BBCode into the live main description and update page
+   images/cover as needed. Nexus publishing updates the download, page version,
+   requirements, and changelog; it does not update the main description,
+   summary, or images. Preview, save, and check the public page, then record
+   which release's page updates were applied.
 
 Stable `vX.Y.Z` tags are supported; prerelease tags are rejected. Validation
 failures create no release. Rerunning a successful workflow can replace assets on

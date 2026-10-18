@@ -1,8 +1,11 @@
 # Nexus Mods 1.1.0 launch fields
 
-Use these alongside the [launch checklist](../NEXUSMODS.md). Copy only each
-field's fenced contents, without the backticks. The main page description is
-provided separately in [BBCode](page-description.bbcode).
+These fields record the original manual 1.1.0 launch. For later releases, use
+the [manual page-update checklist](../NEXUSMODS.md#manual-page-updates-after-a-release)
+and maintained [main-page BBCode](page-description.bbcode). Do not copy this
+file's 1.1.0 version, main-file description, or initial changelog into a later
+release. Copy only each field's fenced contents, without the backticks, when
+referring to the original launch fields.
 
 ## Mod name
 
