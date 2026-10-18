@@ -43,6 +43,13 @@ If a sent transfer loses its acknowledgement during shutdown, that reason
 explicitly says the host may already have accepted it; world and character saves
 still do not form one atomic transaction.
 
+The current source accepts inventory formats **109 and 110**. Valheim 1.0.20
+writes format 110; builds before this compatibility fix reject those snapshots
+with `Unsupported inventory format 110`, preventing access and transfers.
+Existing format-109 guild contents still load, and Valheim's native item loader
+handles the version-specific metadata. Uninspected inventory formats remain
+blocked with their saved bytes retained.
+
 ## AzuAutoStore
 
 The adapter targets **AzuAutoStore 3.1.7**, obtained from its author's Hexium
@@ -70,7 +77,14 @@ continues to work for ordinary containers.
 
 ## AzuCraftyBoxes
 
-The adapter targets **AzuCraftyBoxes 1.8.27** from the author's Hexium release.
+The adapter supports **AzuCraftyBoxes 1.8.27 and 1.8.28** from the author's
+Hexium releases. Inspection of both release DLLs found no changes to the
+container wrappers, nearby queries, count caches, crafting/building patches or
+pull-permission methods used by Guild Chest. Version 1.8.28 adds the `Cookables`
+filter group; the existing adapter delegates pull restrictions to CraftyBoxes,
+so no adapter change is needed for that group. The separate inventory-format
+fix described above is required when running on Valheim 1.0.20.
+
 Nearby guild contents are polled for recipe/resource previews and counted once,
 even with several nearby guild chests. The adapter respects the mod's container
 selection, pull restrictions and Leave One setting.
@@ -171,7 +185,7 @@ multiplayer checks.
 ## Upstream releases inspected
 
 - [AzuAutoStore 3.1.7](https://valheim.hexium.gg/mods/Azumatt/AzuAutoStore)
-- [AzuCraftyBoxes 1.8.27](https://valheim.hexium.gg/mods/Azumatt/AzuCraftyBoxes)
+- [AzuCraftyBoxes 1.8.27 and 1.8.28](https://valheim.hexium.gg/mods/Azumatt/AzuCraftyBoxes/versions)
 
 Optional hooks use reflection; neither third-party DLL is bundled or required.
 Each adapter resolves and validates its required bindings before installing any
