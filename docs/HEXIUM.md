@@ -11,9 +11,10 @@ Guild Chest 1.1.0 is now public on
 [Hexium](https://valheim.hexium.gg/mods/randenko/GuildChest). Its downloadable
 archive passes content verification; both DLLs have assembly and file version
 1.1.0.0. The categories and Client & Server requirement are complete. Hexium
-currently reports **Virus scan —**; the workflow remains incomplete until the
-requested version shows **Scan successful**. Clean Gale profile and gameplay
-checks remain manual. See the [publication record](VALIDATION.md).
+currently reports **Virus scan —**. An unavailable scan is reported as a pending
+follow-up; verified publication succeeds without waiting for it. Clean Gale
+profile and gameplay checks remain manual. See the
+[publication record](VALIDATION.md).
 
 ## Configuration and first publication
 
@@ -32,6 +33,14 @@ authorization were established during the 1.1.0 publication.
 Keep credentials in environment variables or GitHub Secrets, never arguments,
 committed files, or chat messages.
 
+Hexium also has a **team API upload visibility** setting. The owner supplied
+Hexium's launch inbox notice confirming that API uploads are hidden by default
+pending review unless the team turns that behavior off. The owner confirmed
+changing team `randenko` to publish API uploads immediately. This setting
+applies to the team's API uploads; GitHub's `HEXIUM_PUBLISH_ENABLED` repository
+variable controls whether this workflow uploads at all. Manual preflight
+remains read-only even when that variable is `true`.
+
 1. Review and merge the workflow and helper into `main` after CI passes.
 2. In **Actions → Hexium → Run workflow**, select `main`, enter **v1.1.0**,
    and leave **Validate without uploading** enabled. Preflight works while the
@@ -40,11 +49,14 @@ committed files, or chat messages.
    Thunderstore and Nexus Mods switches at their existing values.
 4. Manually dispatch **v1.1.0** again with **Validate without uploading** disabled.
    Its earlier GitHub release event will not replay automatically.
-   The launch API upload created a **private** listing that returned 404 from
-   the public package API. If this happens, open the existing listing and choose
+   Hexium's default team API upload visibility setting made the launch listing
+   **private**, returning 404 from the public package API. If this happens, open
+   the existing listing and choose
    **⚙ → Make public**, then retry the workflow to complete metadata. Do not
    upload the archive again while that listing is private. Hexium's documented
-   API does not expose a visibility control.
+   API does not expose a visibility control. The owner subsequently changed the
+   team setting to publish API uploads immediately, removing this manual
+   visibility step from the configured future release process.
 5. Check the public listing, four screenshots, changelog, Jötunn dependency,
    client/server requirement, and version scan. Install using a clean Gale
    profile; verify BepInEx and Jötunn resolution, both Guild Chest DLLs at
@@ -87,20 +99,34 @@ After archive identity is established, the helper uses the
 to `both` and complete **Building**, **Storage**, **Quality of Life**, and
 **Open Source** categories. It verifies both the response and the approved
 public listing's categories, including **Client & Server**. Protected Hexium
-categories can remain present. It also requires the requested version's public
-**Scan successful** badge; a scan on another version does not satisfy this check.
+categories can remain present.
+
+Virus scanning is reported separately after content and metadata verification.
+The helper reads the requested version's public scan status once. **Scan
+successful** is reported as successful; a missing or pending result, an
+unavailable versions page, or an error reading it (including a truncated HTTP
+response) is reported as **pending** with a link for follow-up. These conditions
+do not wait for a scan or fail an otherwise verified publication. An explicit
+**detections reported** badge still
+fails the run for review. A badge on another version does not affect the
+requested version's result.
 
 Existing matching versions skip upload and complete unfinished metadata. CLI
 errors and timeouts trigger reconciliation because Hexium may have accepted
-the upload before its response was lost. Public visibility, downloads, metadata,
-and scans are polled for up to five minutes. An unresolved result fails as
+the upload before its response was lost. Public visibility, downloads, and
+metadata are polled for up to five minutes. Unresolved publication fails as
 incomplete; wait for visibility, then retry the same release tag. A known inactive
 or not-yet-downloadable version never permits another upload in the same run.
 Non-404 API errors stop rather than being treated as absence. Metadata writes
 set fixed values and can be retried safely after a lost response.
 
 The Actions summary reports the listing URL, source SHA-256, downloaded SHA-256,
-and content-verification result, including incomplete reconciliation results.
+content-verification result, and separate virus-scan status, including incomplete
+reconciliation results. Preflight and incomplete publication report a scan as
+**not checked**. A pending scan needs follow-up on Hexium's versions page;
+re-uploading is unnecessary. Archive conflicts, missing dependencies, and
+incomplete or conflicting metadata still fail the run.
+
 No publishing token is sent on reads, downloads, or redirects. The GitHub token
 is restricted to its API origin. tcli receives only the Hexium token through
 `TCLI_AUTH_TOKEN` and selected runtime environment settings. The metadata token

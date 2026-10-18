@@ -1,6 +1,7 @@
 """Read and validate the exact published GitHub assets shared by the publishers."""
 from dataclasses import dataclass
 import hashlib
+from http.client import HTTPException
 import io
 import json
 from pathlib import Path
@@ -55,6 +56,9 @@ class Http:
             raise ValueError(f'GET {url} failed with HTTP {error.code}; retry after resolving the error.') from error
         except URLError as error:
             raise ValueError(f'GET {url} failed: {error.reason}; retry after resolving the error.') from error
+        except (HTTPException, OSError) as error:
+            raise ValueError(f'GET {url} failed while receiving the response ({type(error).__name__}); '
+                             'retry after resolving the error.') from error
 
     def json(self, url, *, optional=False):
         data = self.get(url, optional=optional)

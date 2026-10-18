@@ -2,6 +2,7 @@
 """Preflight or publish the original GitHub release ZIP to Hexium."""
 import argparse
 import hashlib
+from http.client import HTTPException
 from html.parser import HTMLParser
 import io
 import json
@@ -11,7 +12,7 @@ import re
 import subprocess
 import tempfile
 import time
-from urllib.error import HTTPError, URLError
+from urllib.error import HTTPError
 from urllib.parse import urljoin, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 import zipfile
@@ -53,7 +54,7 @@ class MetadataHttp:
                 return json.loads(response.read())
         except HTTPError as error:
             raise ValueError(f'Hexium metadata update failed with HTTP {error.code}; retry this release tag.') from error
-        except URLError as error:
+        except (HTTPException, OSError) as error:
             raise ValueError('Hexium metadata response was lost; retry this release tag to reconcile.') from error
 
 
@@ -158,6 +159,7 @@ class VersionScan(HTMLParser):
         self.depth = 0
         self.target_depth = None
         self.clean = False
+        self.detected = False
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
@@ -165,8 +167,12 @@ class VersionScan(HTMLParser):
             self.depth += 1
             if attrs.get('id') == f'v-{self.version}' and 'version-entry' in attrs.get('class', '').split():
                 self.target_depth = self.depth
-        if self.target_depth is not None and 'status-badge--vt-clean' in attrs.get('class', '').split():
-            self.clean = True
+        if self.target_depth is not None:
+            classes = attrs.get('class', '').split()
+            if 'status-badge--vt-clean' in classes:
+                self.clean = True
+            if 'status-badge--vt-detected' in classes:
+                self.detected = True
 
     def handle_endtag(self, tag):
         if tag == 'div':
@@ -175,13 +181,23 @@ class VersionScan(HTMLParser):
             self.depth -= 1
 
 
-def scan_complete(http, listing, version):
-    page = http.get(listing + '/versions', optional=True)
-    if page is None:
-        raise Pending('Hexium versions page is not visible yet.')
-    parser = VersionScan(version)
-    parser.feed(page.decode('utf-8'))
-    return parser.clean
+def scan_status(http, listing, version):
+    follow_up = f'{listing}/versions#v-{version}'
+    try:
+        page = http.get(listing + '/versions', optional=True)
+        if page is None:
+            return f'pending (status unavailable); follow up at {follow_up}'
+        parser = VersionScan(version)
+        parser.feed(page.decode('utf-8'))
+    except (ValueError, OSError, HTTPException):
+        # Scan reporting is separate from the verified publication. A missing
+        # page, unreadable response, or transport error cannot undo that result.
+        return f'pending (status unavailable); follow up at {follow_up}'
+    if parser.detected:
+        raise ValueError(f'Hexium reports virus detections for {version}; review {follow_up}.')
+    if parser.clean:
+        return 'successful'
+    return f'pending (no successful result available); follow up at {follow_up}'
 
 
 def configuration(namespace, manifest):
@@ -201,11 +217,12 @@ def configuration(namespace, manifest):
     return '\n'.join(lines)
 
 
-def report(status, release, listing, downloaded=None):
+def report(status, release, listing, downloaded=None, *, scan='not checked'):
     result = 'passed (all other files identical; manifest normalization allowed)' if downloaded else 'pending'
     return (f'{status}: {release.tag}\n\nListing: {listing}\n\n'
             f'Source SHA-256: {release.sha256}\n\n'
-            f'Downloaded SHA-256: {downloaded or "not available"}\n\nContent verification: {result}.')
+            f'Downloaded SHA-256: {downloaded or "not available"}\n\nContent verification: {result}.\n\n'
+            f'Virus scan: {scan}.')
 
 
 def publish(tag, *, repository=ROOT, namespace='', token='', http=None, metadata=None,
@@ -273,10 +290,9 @@ def publish(tag, *, repository=ROOT, namespace='', token='', http=None, metadata
                 complete = public_metadata(http, namespace, release.manifest)
             if not complete:
                 raise Pending('Hexium listing metadata is not complete yet.')
-            if not scan_complete(http, listing, release.version):
-                raise Pending('Hexium version scan is not successful yet.')
-            status = 'Published and verified' if submitted else 'Already published; metadata and scan verified'
-            return report(status, release, listing, downloaded)
+            scan = scan_status(http, listing, release.version)
+            status = 'Published and verified' if submitted else 'Already published; content and metadata verified'
+            return report(status, release, listing, downloaded, scan=scan)
         except Pending as error:
             pending = str(error)
         remaining = deadline - now()
