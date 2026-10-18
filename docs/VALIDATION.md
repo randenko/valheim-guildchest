@@ -11,7 +11,8 @@ The user confirmed on **2026-10-17** that Guild Chest works correctly on the
 latest server version, **Valheim 1.0.20**. Historical native fixture results
 below use **Valheim 1.0.16**, Steam build **25527701**, obtained on 2026-10-05.
 Automated unit tests do not load Valheim, and compiling the native fixture does
-not execute it; the fixture has not been rerun on 1.0.20.
+not execute it. The AzuCraftyBoxes 1.8.28 check below separately runs the native
+fixture on 1.0.20.
 
 ## Server reference verification (2026-10-17)
 
@@ -29,8 +30,55 @@ not execute it; the fixture has not been rerun on 1.0.20.
   references. Product builds have no warnings or errors. The native fixture
   restore/build reports **NU1900** because NuGet vulnerability metadata could not
   be fetched (`Permission denied (api.nuget.org:443)`); compilation succeeds.
-  No automated native fixture was run on 1.0.20; live gameplay is confirmed by
-  the user above.
+  That reference-verification command did not execute the native fixture;
+  the later 1.8.28 runtime result is recorded below.
+
+## AzuCraftyBoxes 1.8.28 compatibility (2026-10-17)
+
+- Downloaded the author's [1.8.28 Hexium release](https://valheim.hexium.gg/mods/Azumatt/AzuCraftyBoxes/versions)
+  and compared its decompiled DLL with the previously inspected 1.8.27 release.
+  The new `Cookables` group and version metadata account for the code changes;
+  container wrappers, nearby queries, count caches, crafting/building patches
+  and pull-permission methods are unchanged. The release ZIP has SHA-256
+  `e21292c883168145b768faf462de7ff4856a380ca38e9906621636ab658959af`;
+  its DLL has SHA-256
+  `381883fe4625d1dd119bb425a2f3c7522457fbc08ae1db60159f8256de940d6e`.
+- The unmodified Guild Chest 1.1.0 source successfully installs the 1.8.28
+  adapter on Valheim 1.0.20, but the native transport fixture fails before
+  reaching its CraftyBoxes checks: `Unsupported inventory format 110`.
+  Compilation and the normal unit tests did not detect this runtime issue.
+- The compatibility fix accepts formats 109 and 110 and passes the recorded
+  version to Valheim's native item loader. Inspection confirms both formats
+  retain the record layout used by the unresolved-item guard; format 110
+  interprets the existing trailing cheat flag. Native regression checks cover
+  current-format round trips, legacy-109 contents and reserialization, cheat
+  metadata, unchanged client-only items, and rejection of formats 108 and 111.
+- `dotnet run --project build -- --target Test Compile Package NativeSmoke`
+  passes **15 C#** and **162 Python** tests, compiles Debug and Release, creates
+  the local test ZIP, and compiles the native fixture. Product builds have no
+  warnings or errors; the native fixture reports the existing NuGet **NU1900**
+  vulnerability-metadata warning described above.
+- With the fix, the full native compatibility fixture passes on **Valheim
+  1.0.20**, Steam build **25909431**, with **AzuCraftyBoxes 1.8.28**,
+  **AzuAutoStore 3.1.7**, **BepInExPack 5.4.2351** and **Jötunn 2.30.2** in an
+  isolated disposable world. It emits `NATIVE_SMOKE_INVENTORY_FORMATS_PASSED`,
+  `NATIVE_SMOKE_CRAFTY_COOKABLES_PASSED` and `NATIVE_SMOKE_COMPAT_PASSED`, exits
+  with code zero, and creates the success marker without a failure marker.
+  Passing paths include normal chest transfers, group exclusions and individual
+  overrides, shared previews, crafting, ingredient-quality and batch rules,
+  Leave One, AutoStore continuation, delayed/stale preview replies, transaction
+  fault injection, and single-click portal placement/cancellation. This is a
+  scripted host fixture with a synthetic player; it does not exercise a remote
+  client or interactive UI. Logs and the marker are retained locally in
+  `.local/compat/crafty-1.8.28/native-fixed/`.
+- The user confirmed on **2026-10-17** that
+  `artifacts/GuildChest-1.1.0-compat-test.zip` works in game with
+  **AzuCraftyBoxes 1.8.28**, completing the requested final compatibility check.
+  The tested ZIP has SHA-256
+  `e137f968b0fd8d73f53417432d9e4b20e774df05b1c8ebc063442c90db5e8703`.
+  This unpublished test build retains version **1.1.0** and includes the
+  inventory-format fix. Individual gameplay checklist results below remain
+  limited to the scenarios separately documented.
 
 ## Hexium publication (2026-10-17)
 
@@ -451,7 +499,7 @@ libraries, including PulseAudio libraries; these are not part of the development
 dev container. Run BepInEx with the normal server loader for your platform.
 
 For the storage-mod fixture, install the author's **AzuAutoStore 3.1.7** and
-**AzuCraftyBoxes 1.8.27** DLLs in that isolated installation, and additionally set
+**AzuCraftyBoxes 1.8.28** DLLs in that isolated installation, and additionally set
 `GUILDCHEST_SMOKE_COMPAT=1`. This adds a 0.5-second commit-reply delay to exercise
 the pending-inventory guards. The storage regressions additionally delay open
 replies by 0.5 seconds, preview replies by 1.2 seconds, and drop one preview.
@@ -470,6 +518,15 @@ The adapter fixture checks nested staged inventory restoration and required-hook
 validation before the compatibility flows. It emits
 `NATIVE_SMOKE_ADAPTER_BINDINGS_PASSED`. Its deliberate missing-prefix lookup
 produces a Harmony warning; no partial hooks may remain after that rejection.
+On CraftyBoxes 1.8.28 or newer, the fixture also checks `Cookables` membership,
+group exclusions and individual overrides through the Guild Chest adapter,
+emitting `NATIVE_SMOKE_CRAFTY_COOKABLES_PASSED`. Earlier 1.8.27 fixture runs skip
+this group check.
+
+Before the transport checks, `NATIVE_SMOKE_INVENTORY_FORMATS_PASSED` verifies
+native inventory decoding, legacy format-109 contents, format-110 cheat metadata
+when supported by the game, and rejection of uninspected formats. The unresolved
+player-prefab checks also reject changes to the serialized cheat flag.
 
 ## Automated and container checks
 

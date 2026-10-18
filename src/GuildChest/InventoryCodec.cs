@@ -47,7 +47,7 @@ internal static class InventoryCodec
         if (bytes.Length > MaxBytes) throw new InvalidOperationException("Inventory exceeds the supported package size.");
         var package = new ZPackage(bytes);
         int version = package.ReadInt();
-        if (version != 109) throw new InvalidOperationException($"Unsupported inventory format {version}; saved data has been retained.");
+        if (version != 109 && version != 110) throw new InvalidOperationException($"Unsupported inventory format {version}; saved data has been retained.");
         int count = package.ReadUShort();
         if (count > width * height) throw new InvalidOperationException("Too many inventory entries.");
         var result = new List<Entry>();
@@ -62,7 +62,7 @@ internal static class InventoryCodec
                 throw new InvalidOperationException($"Invalid item prefab {hash}: stack {item.m_stack}, quality {item.m_quality}, slot ({item.m_gridPos.x}, {item.m_gridPos.y}) in {width} x {height} inventory, or duplicate slot.");
             var encoded = new byte[package.GetPos() - start];
             Array.Copy(bytes, start, encoded, 0, encoded.Length);
-            // Format 109 starts with durability (4 bytes), then grid X/Y. Allow local
+            // Formats 109 and 110 start with durability (4 bytes), then grid X/Y. Allow local
             // rearrangement while preserving every other byte of an unresolved item.
             encoded[4] = 0; encoded[5] = 0;
             result.Add(new Entry { Hash = hash, Item = item, UnchangedKey = Convert.ToBase64String(encoded) });

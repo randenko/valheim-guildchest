@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
@@ -9,6 +10,33 @@ public sealed partial class NativeSmokeHarness
 {
     private static int BindingTarget() => 7;
     private static bool BindingPrefix(ref int __result) { __result = 9; return false; }
+
+    private void VerifyCraftyCookables(Container chest)
+    {
+        var info = BepInEx.Bootstrap.Chainloader.PluginInfos["Azumatt.AzuCraftyBoxes"];
+        if (info.Metadata.Version < new System.Version(1, 8, 28)) return;
+        var plugin = info.Instance.GetType();
+        var groups = (Dictionary<string, HashSet<string>>)AccessTools.Field(plugin, "groups").GetValue(null);
+        Check(groups.TryGetValue("Cookables", out var cookables) && cookables.Contains("NeckTail") && cookables.Contains("SerpentMeat"),
+            "CraftyBoxes registers raw ingredients in Cookables");
+        var wrapperType = plugin.Assembly.GetType("AzuCraftyBoxes.IContainers.VanillaContainer")!;
+        var wrapper = AccessTools.Method(wrapperType, "Create").Invoke(null, new object[] { chest });
+        var prefab = (string)AccessTools.Method(wrapperType, "GetPrefabName").Invoke(wrapper, null);
+        var pullable = AccessTools.Method(typeof(GuildChest.Plugin).Assembly.GetType("GuildChest.CraftyBoxesAdapter"), "Pullable");
+        bool CanPull(string item) => (bool)pullable.Invoke(null, new[] { wrapper, item });
+        var yaml = AccessTools.Field(plugin, "yamlData");
+        var original = yaml.GetValue(null);
+        try
+        {
+            var rules = new Dictionary<string, List<string>> { ["exclude"] = new() { "Cookables" } };
+            yaml.SetValue(null, new Dictionary<string, Dictionary<string, List<string>>> { [prefab] = rules });
+            Check(!CanPull("NeckTail") && !CanPull("SerpentMeat") && CanPull("Stone"), "Guild adapter honors Cookables exclusion");
+            rules["includeOverride"] = new() { "NeckTail" };
+            Check(CanPull("NeckTail") && !CanPull("SerpentMeat"), "Guild adapter honors individual Cookables override");
+        }
+        finally { yaml.SetValue(null, original); }
+        Logger.LogInfo("NATIVE_SMOKE_CRAFTY_COOKABLES_PASSED");
+    }
 
     private void VerifyAdapterBindings(Player player, Container chest, Container second)
     {

@@ -224,6 +224,7 @@ public sealed partial class NativeSmokeHarness : BaseUnityPlugin
         Player player; Container chest;
         try
         {
+            VerifyInventoryFormats();
             var position = new Vector3(0, 1000, 0);
             // Prevent the headless Game.Update spawn lifecycle from replacing or
             // teleporting the synthetic player once world generation completes.
@@ -346,6 +347,7 @@ public sealed partial class NativeSmokeHarness : BaseUnityPlugin
             AccessTools.Method(crafty.GetType("AzuCraftyBoxes.Util.Functions.Boxes"), "AddContainer").Invoke(null, new object[] { chest });
             AccessTools.Method(crafty.GetType("AzuCraftyBoxes.Util.Functions.Boxes"), "AddContainer").Invoke(null, new object[] { second });
             VerifyAdapterBindings(player, chest, second);
+            VerifyCraftyCookables(chest);
             Check(chest.GetInventory().GetEmptySlots() == 0, "Unadapted guild inventory exposes no writable capacity");
             var ore = ObjectDB.instance.GetItemPrefab("Iron").GetComponent<ItemDrop>().m_itemData.Clone();
             ore.m_dropPrefab = ObjectDB.instance.GetItemPrefab("Iron");
@@ -642,6 +644,9 @@ public sealed partial class NativeSmokeHarness : BaseUnityPlugin
         unknown.m_customData["client-only"] = "changed";
         Check(!Conserves(empty, player, empty, after), "Unknown item metadata mutation rejected");
         unknown.m_customData["client-only"] = "preserved";
+        unknown.m_cheated = !unknown.m_cheated;
+        Check(!Conserves(empty, player, empty, after), "Unknown item cheat flag mutation rejected");
+        unknown.m_cheated = !unknown.m_cheated;
         unknown.m_stack = 2;
         Check(!Conserves(empty, player, empty, after), "Unknown item quantity mutation rejected");
         bool rejected = false;

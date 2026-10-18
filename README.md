@@ -96,8 +96,8 @@ an integration's own range can restrict it further. Normal chest interaction
 keeps its usual range. Capacity and construction costs are fixed.
 
 Optional adapters were tested in the native fixture with **AzuAutoStore 3.1.7**
-and **AzuCraftyBoxes 1.8.27**. Neither is required or bundled. AutoStore supports
-player hotkey/single-item deposits; CraftyBoxes supports nearby resource previews,
+and **AzuCraftyBoxes 1.8.27 and 1.8.28**. Neither is required or bundled. AutoStore
+supports player hotkey/single-item deposits; CraftyBoxes supports nearby resource previews,
 crafting supply, and building after acknowledged transfers. AutoStore ground-drop
 automation and CraftyBoxes fuel/ore feeding and Epic Loot consumers exclude guild
 storage. Other storage mods need explicit integration. See
