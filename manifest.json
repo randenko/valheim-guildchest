@@ -1,6 +1,6 @@
 {
   "name": "GuildChest",
-  "version_number": "1.1.0",
+  "version_number": "1.1.1",
   "website_url": "https://github.com/randenko/valheim-guildchest",
   "description": "One shared inventory across all guild chests in a Valheim world.",
   "dependencies": [

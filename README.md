@@ -77,8 +77,10 @@ BepInEx. Console clients cannot load the chest. The current build reference is
 **[Valheim 1.0.20](https://www.valheim.com/news/patch-1-0-20/) (Steam Dedicated
 Server build 25909431)**, verified on 2026-10-17. Automated unit tests are
 game-independent. The user confirmed live gameplay on **Valheim 1.0.20**.
-Recorded native fixture checks on **Valheim 1.0.16 (Steam build 25527701)** cover
-registration, recipes, transfers, and persistence. See the
+Native compatibility checks also pass on **Valheim 1.0.20**, including
+**AzuCraftyBoxes 1.8.28**, which the user confirmed in game. Historical fixture
+checks on **Valheim 1.0.16 (Steam build 25527701)** cover registration, recipes,
+transfers, and persistence. See the
 [validation record and detailed gameplay scenarios](docs/VALIDATION.md).
 
 ## Configuration and optional integrations
@@ -128,6 +130,6 @@ there too; GitHub Issues is the exclusive tracking channel.
 Guild Chest is free and open source under the [MIT license](LICENSE).
 Enjoying the mod? [Buy me a coffee](https://ko-fi.com/randenko) as an optional thank-you.
 
-See the [1.1.0 release notes](docs/releases/v1.1.0.md),
+See the [1.1.1 release notes](docs/releases/v1.1.1.md),
 [development guide](docs/DEVELOPMENT.md), and [architecture](docs/ARCHITECTURE.md)
 for project details.

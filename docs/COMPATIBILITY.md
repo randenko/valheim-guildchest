@@ -43,7 +43,7 @@ If a sent transfer loses its acknowledgement during shutdown, that reason
 explicitly says the host may already have accepted it; world and character saves
 still do not form one atomic transaction.
 
-The current source accepts inventory formats **109 and 110**. Valheim 1.0.20
+Version **1.1.1** accepts inventory formats **109 and 110**. Valheim 1.0.20
 writes format 110; builds before this compatibility fix reject those snapshots
 with `Unsupported inventory format 110`, preventing access and transfers.
 Existing format-109 guild contents still load, and Valheim's native item loader
