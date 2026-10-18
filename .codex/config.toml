@@ -13,6 +13,7 @@ enabled = true
 [permissions.github-workspace.network.domains]
 "api.github.com" = "allow"
 "github.com" = "allow"
+"valheim.hexium.gg" = "allow"
 
 # GitHub raw files, source archives, and release downloads.
 "raw.githubusercontent.com" = "allow"

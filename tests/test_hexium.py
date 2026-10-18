@@ -1,5 +1,6 @@
 """Exercise Hexium publication without credentials or external writes."""
 import hashlib
+from http.client import HTTPException, IncompleteRead
 import io
 import json
 import os
@@ -9,7 +10,7 @@ import sys
 import tomllib
 import unittest
 from unittest.mock import patch
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.request import Request
 import zipfile
 
@@ -162,6 +163,7 @@ class HexiumTests(unittest.TestCase):
         self.assertIn('Published and verified', message)
         self.assertIn('Downloaded SHA-256: ' + hashlib.sha256(self.contents).hexdigest(), message)
         self.assertIn('Content verification: passed', message)
+        self.assertIn('Virus scan: successful', message)
         self.assertEqual(len(self.uploads), 1)
         upload = self.uploads[0]
         self.assertEqual(upload['archive'], self.contents)
@@ -318,9 +320,12 @@ class HexiumTests(unittest.TestCase):
         self.http.responses[self.download_url] = [None, self.contents]
         self.http.responses[self.package_url] = [None, self.public()]
         self.http.responses[self.listing + '/versions'] = [self.scan(status='pending'), self.scan()]
-        self.assertIn('Published and verified', self.run_publish(preflight=False))
+        message = self.run_publish(preflight=False)
+        self.assertIn('Published and verified', message)
+        self.assertIn('Virus scan: pending', message)
         self.assertEqual(len(self.uploads), 1)
         self.assertGreaterEqual(len(self.sleeps), 3)
+        self.assertEqual(self.http.calls.count(self.listing + '/versions'), 1)
 
     def test_known_inactive_version_is_polled_without_duplicate_upload(self):
         self.http.responses[self.version_url] = [{**self.existing(), 'is_active': False}, self.existing()]
@@ -328,7 +333,7 @@ class HexiumTests(unittest.TestCase):
         self.assertIn('Already published', self.run_publish(preflight=False))
         self.assertFalse(self.uploads)
 
-    def test_unconfirmed_publication_and_pending_scan_require_later_retry(self):
+    def test_unconfirmed_publication_requires_retry_but_pending_scan_does_not(self):
         with self.assertRaisesRegex(hexium.Pending, 'publication incomplete.*Retry this release tag'):
             self.run_publish(preflight=False)
         self.assertEqual(sum(self.sleeps), 300)
@@ -336,18 +341,78 @@ class HexiumTests(unittest.TestCase):
         self.ready()
         self.http.responses[self.listing + '/versions'] = self.scan(status='pending')
         self.sleeps.clear()
-        with self.assertRaisesRegex(hexium.Pending, 'scan is not successful'):
-            self.run_publish(preflight=False)
-        self.assertEqual(sum(self.sleeps), 300)
+        message = self.run_publish(preflight=False)
+        self.assertIn('Already published; content and metadata verified', message)
+        self.assertIn('Virus scan: pending', message)
+        self.assertFalse(self.sleeps)
         self.http.responses[self.listing + '/versions'] = self.scan()
-        self.assertIn('Already published', self.run_publish(preflight=False))
+        self.assertIn('Virus scan: successful', self.run_publish(preflight=False))
         self.assertEqual(len(self.uploads), 1)
 
-    def test_scan_for_another_version_cannot_complete_publication(self):
+    def test_successful_scan_for_another_version_does_not_mark_requested_scan_successful(self):
         self.ready()
         self.http.responses[self.listing + '/versions'] = self.scan(version='1.2.4') + self.scan(status='pending')
-        with self.assertRaisesRegex(hexium.Pending, 'scan is not successful'):
-            self.run_publish(preflight=False)
+        message = self.run_publish(preflight=False)
+        self.assertIn('Already published', message)
+        self.assertIn('Virus scan: pending', message)
+        self.assertFalse(self.sleeps)
+        self.assertFalse(self.uploads)
+
+    def test_missing_or_pending_scan_is_reported_without_waiting(self):
+        self.ready()
+        for page in (None, b'<html>Virus scan: &mdash;</html>', self.scan(status='pending'),
+                     self.scan(version='1.2.4'), b'\xff'):
+            with self.subTest(page=page):
+                self.http.responses[self.listing + '/versions'] = page
+                self.http.calls.clear()
+                message = self.run_publish(preflight=False)
+                self.assertIn('Already published; content and metadata verified', message)
+                self.assertIn('Content verification: passed', message)
+                self.assertIn('Virus scan: pending', message)
+                self.assertIn(self.listing + '/versions#v-1.2.3', message)
+                self.assertEqual(self.http.calls.count(self.listing + '/versions'), 1)
+        self.assertFalse(self.sleeps)
+        self.assertFalse(self.uploads)
+        self.assertFalse(self.metadata.calls)
+
+    def test_new_upload_succeeds_with_pending_scan_without_waiting(self):
+        self.http.responses[self.version_url] = [None, self.existing()]
+        self.http.responses[self.download_url] = self.contents
+        self.http.responses[self.listing + '/versions'] = self.scan(status='pending')
+        message = self.run_publish(preflight=False)
+        self.assertIn('Published and verified', message)
+        self.assertIn('Content verification: passed', message)
+        self.assertIn('Virus scan: pending', message)
+        self.assertEqual(len(self.uploads), 1)
+        self.assertEqual(len(self.metadata.calls), 1)
+        self.assertFalse(self.sleeps)
+
+    def test_scan_request_errors_do_not_fail_verified_publication(self):
+        self.ready()
+        for error in (ValueError('GET failed with HTTP 500'), TimeoutError('Scan request timed out'),
+                      IncompleteRead(self.scan(), 100), HTTPException('Broken scan response')):
+            with self.subTest(error=error):
+                self.http.responses[self.listing + '/versions'] = error
+                self.http.calls.clear()
+                message = self.run_publish(preflight=False)
+                self.assertIn('Already published; content and metadata verified', message)
+                self.assertIn('Virus scan: pending (status unavailable)', message)
+                self.assertEqual(self.http.calls.count(self.listing + '/versions'), 1)
+        self.assertFalse(self.sleeps)
+        self.assertFalse(self.uploads)
+        self.assertFalse(self.metadata.calls)
+
+    def test_reported_virus_detections_still_fail_publication(self):
+        self.ready()
+        for page in (self.scan(status='detected'), self.scan() + self.scan(status='detected')):
+            self.http.responses[self.listing + '/versions'] = page
+            self.assert_rejected('Hexium reports virus detections for 1.2.3')
+        self.assertFalse(self.sleeps)
+
+    def test_virus_detections_for_another_version_do_not_affect_requested_scan(self):
+        self.ready()
+        self.http.responses[self.listing + '/versions'] = self.scan(version='1.2.4', status='detected') + self.scan()
+        self.assertIn('Virus scan: successful', self.run_publish(preflight=False))
         self.assertFalse(self.uploads)
 
     def test_non_404_lookup_errors_never_allow_upload(self):
@@ -356,7 +421,7 @@ class HexiumTests(unittest.TestCase):
 
     def test_reconciliation_deadline_accounts_for_time_spent_on_requests(self):
         self.ready()
-        self.http.responses[self.listing + '/versions'] = self.scan(status='pending')
+        self.http.responses[self.package_url] = None
         ticks = iter((0, 295, 305))
         with self.assertRaisesRegex(hexium.Pending, 'publication incomplete'):
             self.run_publish(preflight=False, now=lambda: next(ticks))
@@ -375,6 +440,18 @@ class HexiumTests(unittest.TestCase):
 
 
 class HexiumHttpTests(unittest.TestCase):
+    def test_metadata_response_read_errors_require_reconciliation(self):
+        metadata = hexium.MetadataHttp('private-fixture')
+        for error in (IncompleteRead(b'private-fixture', 100), HTTPException('private-fixture'),
+                      TimeoutError('private-fixture'), URLError('private-fixture')):
+            with self.subTest(error=error), patch.object(metadata.opener, 'open') as open_url:
+                open_url.return_value.__enter__.return_value.read.side_effect = error
+                with self.assertRaisesRegex(ValueError, 'response was lost; retry this release tag to reconcile') as caught:
+                    metadata.update('randenko', 'GuildChest')
+                self.assertNotIn('private-fixture', str(caught.exception))
+                self.assertIs(caught.exception.__cause__, error)
+                self.assertEqual(open_url.call_count, 1, 'A lost write response must not resubmit automatically.')
+
     def test_metadata_write_is_fixed_origin_and_token_only_in_header(self):
         metadata = hexium.MetadataHttp('private-fixture')
         with patch.object(metadata.opener, 'open') as open_url:

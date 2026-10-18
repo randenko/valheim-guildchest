@@ -1,6 +1,7 @@
 """Exercise Nexus publication and recovery without making remote writes."""
 import copy
 import hashlib
+from http.client import HTTPException, IncompleteRead
 import json
 import os
 from pathlib import Path
@@ -558,6 +559,20 @@ class NexusTests(unittest.TestCase):
 
 
 class TransportTests(unittest.TestCase):
+    def test_response_read_errors_require_reconciliation_without_disclosing_contents(self):
+        api = nexus.NexusHttp('private-fixture')
+        for method in ('GET', 'POST', 'PUT'):
+            for error in (IncompleteRead(b'private-fixture', 100), HTTPException('private-fixture'),
+                          TimeoutError('private-fixture'), URLError('private-fixture')):
+                with self.subTest(method=method, error=error), patch.object(api.opener, 'open') as request:
+                    request.return_value.__enter__.return_value.read.side_effect = error
+                    with self.assertRaisesRegex(ValueError, 'reconcile remote state before retrying writes') as caught:
+                        api.request('/v3/mods/123/files', method=method,
+                                    body=None if method == 'GET' else {'value': 'fixture'})
+                    self.assertNotIn('private-fixture', str(caught.exception))
+                    self.assertIs(caught.exception.__cause__, error)
+                    self.assertEqual(request.call_count, 1, 'A lost response must not repeat a write automatically.')
+
     def test_nexus_key_never_leaves_fixed_api_origin_and_redirects_are_rejected(self):
         api = nexus.NexusHttp('private-key')
         with patch.object(api.opener, 'open') as request:

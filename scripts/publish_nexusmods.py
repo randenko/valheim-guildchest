@@ -3,12 +3,13 @@
 import argparse
 from dataclasses import asdict, dataclass
 import html
+from http.client import HTTPException
 import json
 import os
 from pathlib import Path
 import re
 import time
-from urllib.error import HTTPError, URLError
+from urllib.error import HTTPError
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from package_format import LINK, REPOSITORY, VERSION, release_links
@@ -52,7 +53,7 @@ class NexusHttp:
         except HTTPError as error:
             # Do not print response bodies, keys, request headers, or signed URLs.
             raise ValueError(f'Nexus {method} {path} failed with HTTP {error.code}.') from error
-        except (URLError, TimeoutError) as error:
+        except (HTTPException, OSError) as error:
             raise ValueError(f'Nexus {method} {path} failed; reconcile remote state before retrying writes.') from error
 
     def query(self, query, variables=None):

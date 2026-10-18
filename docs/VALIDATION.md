@@ -23,6 +23,13 @@ compatibility; runtime behavior on newer builds needs separate verification.
   listing. Public API verification returned 404 for five minutes and correctly
   remained incomplete. The owner made the existing listing public through its
   gear menu. No archive was uploaded again.
+- The owner subsequently supplied Hexium's inbox notice explaining the cause:
+  API uploads are hidden by default pending review unless the team disables
+  that behavior in its **API upload visibility** setting. The owner confirmed
+  changing that setting to publish API uploads immediately. GitHub's
+  `HEXIUM_PUBLISH_ENABLED` repository variable remains `true` and controls
+  whether the workflow uploads. The notice explains the initial privacy state;
+  it provides no explanation for the absent virus scan result.
 - [Guild Chest 1.1.0](https://valheim.hexium.gg/mods/randenko/GuildChest) is
   publicly available. The downloaded ZIP has SHA-256
   `b1138d63a7d4d64f1301a2c92ded5a608831969370071c394043ef877713aef6`.
@@ -33,8 +40,22 @@ compatibility; runtime behavior on newer builds needs separate verification.
   recognized the matching existing version and completed Building, Storage,
   Quality of Life, Open Source, and Client & Server metadata. The public page
   includes all four release-specific screenshots, the changelog, and Jötunn.
-  Static analysis reports 10 files analyzed. **Virus scan —** remains visible;
-  the required successful virus-scan result has not been established.
+  Static analysis reports 10 files analyzed. That run failed after waiting five
+  minutes for a **Scan successful** badge while Hexium displayed **Virus scan —**.
+  A successful virus-scan result has not been established.
+- Publication now reports unavailable scans as a separate pending follow-up
+  after archive and metadata verification. It checks the requested version once
+  without polling for a scan result, including when that page cannot be read.
+  An explicit virus-detections badge still fails the run for review. Archive,
+  dependency, and metadata failures retain their existing checks and retries.
+  Truncated-response regressions cover the scan reader, shared release
+  downloader, and both authenticated metadata clients. Required reads still
+  fail, and lost metadata responses require reconciliation without repeating
+  writes or disclosing response contents.
+  The updated NUKE Test target passes 15 C# and 162 Python tests; actionlint
+  passes. A live read-only reconciliation of v1.1.0 succeeds with content and
+  metadata verified and the virus scan reported as pending. That check explicitly
+  disables upload, metadata writes, and polling waits.
 - Regression tests cover the shared release checks, disabled publishing,
   GET-only preflight, exact outgoing ZIP bytes, manifest normalization, changed
   DLLs and other files, invalid categories/dependencies, credential isolation,

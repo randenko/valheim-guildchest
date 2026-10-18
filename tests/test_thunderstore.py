@@ -1,6 +1,7 @@
 """Validate the publisher with disposable tags, mocked GETs, and a recording CLI."""
 import copy
 import hashlib
+from http.client import HTTPException, IncompleteRead
 import io
 import json
 import os
@@ -355,6 +356,21 @@ sys.exit(int(os.environ.get('GUILDCHEST_FAKE_CLI_EXIT', '0')))
 
 
 class HttpTests(unittest.TestCase):
+    def test_response_read_errors_fail_required_and_optional_downloads(self):
+        http = Http('private-fixture-token')
+        for error in (IncompleteRead(b'private-response', 100), HTTPException('private-response'),
+                      TimeoutError('private-response')):
+            for optional in (False, True):
+                for binary in (False, True):
+                    with self.subTest(error=error, optional=optional, binary=binary), \
+                            patch.object(http.opener, 'open') as open_url:
+                        open_url.return_value.__enter__.return_value.read.side_effect = error
+                        with self.assertRaisesRegex(ValueError, 'failed while receiving the response.*retry') as caught:
+                            http.get('https://cdn.example.invalid/package', optional=optional, binary=binary)
+                        self.assertNotIn('private-response', str(caught.exception))
+                        self.assertIs(caught.exception.__cause__, error)
+                        self.assertEqual(open_url.call_count, 1)
+
     def test_publication_metadata_checks_do_not_reuse_cached_absence(self):
         http = Http()
         url = 'https://thunderstore.io/api/experimental/package/Paper_Street_Software/GuildChest/1.1.0/'
