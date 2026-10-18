@@ -6,23 +6,44 @@ provenance is recorded locally in `.local/references.json`; the publication reco
 below identifies the newer release build. A successful compile checks assembly
 compatibility; runtime behavior on newer builds needs separate verification.
 
-## Hexium publishing preparation (2026-10-17)
+## Hexium publication (2026-10-17)
 
-- GitHub has `HEXIUM_NAMESPACE=randenko`, `HEXIUM_PUBLISH_ENABLED=false`, and
-  the `HEXIUM_API_TOKEN` secret. Only presence and public variable values were
-  inspected; no secret value was retrieved. Existing Thunderstore and Nexus
-  publishing switches were left unchanged.
+- GitHub has `HEXIUM_NAMESPACE=randenko` and the `HEXIUM_API_TOKEN` secret.
+  The owner enabled `HEXIUM_PUBLISH_ENABLED=true` after the
+  [Actions preflight](https://github.com/randenko/valheim-guildchest/actions/runs/39080360051)
+  passed. Secret values were not retrieved. Existing Thunderstore and Nexus
+  publishing switches remain unchanged.
 - Live GET-only preflight for v1.1.0 passes using the published GitHub archive
   with SHA-256
   `133b8fe196e45c49fc0d984d07b9f948a070ca25557fe4b7eab8baa70bf7dbf3`.
   Hexium has active BepInExPack Valheim 5.4.2351 and Jötunn 2.30.2 versions,
   and Building, Storage, Quality of Life, and Open Source categories.
+- The [initial upload](https://github.com/randenko/valheim-guildchest/actions/runs/39080524361)
+  succeeded, establishing token authorization, but Hexium created a private
+  listing. Public API verification returned 404 for five minutes and correctly
+  remained incomplete. The owner made the existing listing public through its
+  gear menu. No archive was uploaded again.
+- [Guild Chest 1.1.0](https://valheim.hexium.gg/mods/randenko/GuildChest) is
+  publicly available. The downloaded ZIP has SHA-256
+  `b1138d63a7d4d64f1301a2c92ded5a608831969370071c394043ef877713aef6`.
+  Its exact file set and all file bytes match GitHub, allowing only JSON
+  formatting and removal of the BepInEx dependency from the manifest.
+  Both downloaded DLLs have assembly and file version **1.1.0.0**.
+- The [reconciliation run](https://github.com/randenko/valheim-guildchest/actions/runs/39080999495)
+  recognized the matching existing version and completed Building, Storage,
+  Quality of Life, Open Source, and Client & Server metadata. The public page
+  includes all four release-specific screenshots, the changelog, and Jötunn.
+  Static analysis reports 10 files analyzed. **Virus scan —** remains visible;
+  the required successful virus-scan result has not been established.
 - Regression tests cover the shared release checks, disabled publishing,
   GET-only preflight, exact outgoing ZIP bytes, manifest normalization, changed
   DLLs and other files, invalid categories/dependencies, credential isolation,
   delayed visibility, CLI errors/timeouts, unfinished metadata, version-specific
-  scans, and retry recovery. The [Hexium runbook](HEXIUM.md) records launch and
-  clean Gale profile/gameplay checks; those results remain pending publication.
+  scans, and retry recovery. Review found no actionable regressions; the full
+  NUKE Test target passed 15 C# and 154 Python tests, and actionlint passed.
+  The [Hexium runbook](HEXIUM.md) records clean Gale profile/gameplay checks;
+  those remain manual. The README and saved YouTube description include the
+  verified listing URL; updating the live video description remains manual.
 
 ## Nexus Mods publishing preparation (2026-10-17)
 

@@ -66,6 +66,7 @@ Use a compatible mod manager, or install the dependencies using their manual
 instructions and extract the release ZIP's `BepInEx` folder into each Valheim
 installation. Both `GuildChest.dll` and `GuildChest.Core.dll` belong together in
 `BepInEx/plugins/GuildChest`. Download reviewed builds from
+[Hexium](https://valheim.hexium.gg/mods/randenko/GuildChest),
 [Nexus Mods](https://www.nexusmods.com/valheim/mods/4476),
 [Thunderstore](https://thunderstore.io/c/valheim/p/Paper_Street_Software/GuildChest/),
 or [GitHub Releases](https://github.com/randenko/valheim-guildchest/releases/latest).
