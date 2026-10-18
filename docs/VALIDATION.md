@@ -1,10 +1,36 @@
 # Validation
 
-Recorded native/gameplay reference: **Valheim 1.0.16**, Steam build **25527701**,
-obtained through anonymous SteamCMD app 896660 on 2026-10-05. Current setup
-provenance is recorded locally in `.local/references.json`; the publication record
-below identifies the newer release build. A successful compile checks assembly
-compatibility; runtime behavior on newer builds needs separate verification.
+Current build reference, verified on **2026-10-17**: **Valheim 1.0.20**, Steam
+Dedicated Server build **25909431**, using anonymous SteamCMD app **896660**,
+branch **public**. Iron Gate released
+[patch 1.0.20](https://www.valheim.com/news/patch-1-0-20/) on 2026-10-15 and lists
+it as the latest patch. Setup follows the public branch rather than pinning a
+game version; ordinary builds can reuse cached references.
+
+The user confirmed on **2026-10-17** that Guild Chest works correctly on the
+latest server version, **Valheim 1.0.20**. Historical native fixture results
+below use **Valheim 1.0.16**, Steam build **25527701**, obtained on 2026-10-05.
+Automated unit tests do not load Valheim, and compiling the native fixture does
+not execute it; the fixture has not been rerun on 1.0.20.
+
+## Server reference verification (2026-10-17)
+
+- A fresh anonymous SteamCMD `app_info_update 1` / `app_info_print 896660`
+  query reports public build **25909431**, matching the installed
+  `.local/valheim-server/steamapps/appmanifest_896660.acf` and the manifest in
+  `.local/references.json`.
+- Inspection of the installed `assembly_valheim.dll` confirms
+  `Version.CurrentVersion = new GameVersion(1, 0, 20)` and network version **41**.
+  Reference paths, pinned BepInExPack **5.4.2351** and Jötunn **2.30.2** versions,
+  and assembly SHA-256 hashes are recorded locally in `.local/references.json`.
+- `dotnet run --project build -- --target Test Compile Package NativeSmoke`
+  passes **15 C#** and **162 Python** tests, builds the Debug solution and Release
+  plugin, creates the release ZIP, and compiles the native fixture against these
+  references. Product builds have no warnings or errors. The native fixture
+  restore/build reports **NU1900** because NuGet vulnerability metadata could not
+  be fetched (`Permission denied (api.nuget.org:443)`); compilation succeeds.
+  No automated native fixture was run on 1.0.20; live gameplay is confirmed by
+  the user above.
 
 ## Hexium publication (2026-10-17)
 
@@ -121,7 +147,8 @@ compatibility; runtime behavior on newer builds needs separate verification.
   the existing installation. Setup and restore succeeded against build 25909431.
   The standalone setup fix passes 15 C# and 71 Python tests; Compile succeeds with
   no warnings or errors against the refreshed references. Gameplay on this newer
-  build remains unvalidated.
+  build was unvalidated at that time; the user's 2026-10-17 confirmation is
+  recorded above.
 
 ## 1.1.0 publication (2026-10-13)
 

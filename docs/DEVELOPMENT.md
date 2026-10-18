@@ -161,6 +161,16 @@ product build and test configuration. Packaging always builds Release.
 `Release` and `Compatibility` use Debug for their solution build by default;
 neither target runs gameplay checks or publishes a release.
 
+As of 2026-10-17, the downloaded build reference is **Valheim 1.0.20**, Steam
+Dedicated Server app **896660**, build **25909431**. Iron Gate released
+[patch 1.0.20](https://www.valheim.com/news/patch-1-0-20/) on 2026-10-15.
+Setup downloads Steam's `public` branch; the game version is not pinned.
+Container startup, `--update-references`, `Release`, and `Compatibility` refresh
+that reference, while ordinary builds can reuse cached assemblies. Core tests
+are game-independent, and `NativeSmoke` compiles the fixture without running it.
+See the [validation record](VALIDATION.md) for current build checks and the
+user-confirmed 1.0.20 gameplay and historical native fixture results.
+
 `ValheimManagedDir` defaults to the downloaded server's
 `.local/valheim-server/valheim_server_Data/Managed` directory. Override it when
 building against a different client or server installation:
@@ -179,7 +189,11 @@ Game downloads and dependency DLLs are ignored by Git and excluded from the
 release ZIP. `.local/references.json` records the Managed directory, dependency
 versions, and assembly SHA-256 hashes. Default downloads also record the Steam
 manifest/build ID; custom references use absolute hash keys for external files
-and do not claim the downloaded server's Steam manifest. To update the game
+and do not claim the downloaded server's Steam manifest. For default downloads,
+compare `buildid` in
+`.local/valheim-server/steamapps/appmanifest_896660.acf` with that recorded
+manifest, and obtain the game version from the installed server's startup log
+or `Version.CurrentVersion` in its `assembly_valheim.dll`. To update the game
 references deliberately and refetch pinned mod dependencies:
 
 ```bash
