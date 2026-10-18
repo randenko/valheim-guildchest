@@ -73,10 +73,12 @@ or [GitHub Releases](https://github.com/randenko/valheim-guildchest/releases/lat
 Keep item mods installed on the host and all clients when storing their items.
 
 Guild Chest supports solo, player-hosted, and dedicated-server use on PCs with
-BepInEx. Console clients cannot load the chest. Recorded native checks use
-**Valheim 1.0.16 (Steam build 25527701)**; newer game builds require verification.
-Headless checks cover registration, recipes, transfers, and persistence. Live
-gameplay was confirmed by the user for launch. See the
+BepInEx. Console clients cannot load the chest. The current build reference is
+**[Valheim 1.0.20](https://www.valheim.com/news/patch-1-0-20/) (Steam Dedicated
+Server build 25909431)**, verified on 2026-10-17. Automated unit tests are
+game-independent. The user confirmed live gameplay on **Valheim 1.0.20**.
+Recorded native fixture checks on **Valheim 1.0.16 (Steam build 25527701)** cover
+registration, recipes, transfers, and persistence. See the
 [validation record and detailed gameplay scenarios](docs/VALIDATION.md).
 
 ## Configuration and optional integrations
