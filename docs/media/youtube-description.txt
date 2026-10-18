@@ -22,6 +22,9 @@ https://thunderstore.io/c/valheim/p/Paper_Street_Software/GuildChest/
 Download on Nexus Mods:
 https://www.nexusmods.com/valheim/mods/4476
 
+Download on Hexium:
+https://valheim.hexium.gg/mods/randenko/GuildChest
+
 Downloads and release notes:
 https://github.com/randenko/valheim-guildchest/releases/latest
 

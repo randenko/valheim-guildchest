@@ -7,6 +7,14 @@ them with `scripts/release_assets.py`, and passes the original ZIP to official
 values used by the Thunderstore publisher. Releases are never rebuilt or
 repackaged for upload. Existing tags, assets, and published notes stay unchanged.
 
+Guild Chest 1.1.0 is now public on
+[Hexium](https://valheim.hexium.gg/mods/randenko/GuildChest). Its downloadable
+archive passes content verification; both DLLs have assembly and file version
+1.1.0.0. The categories and Client & Server requirement are complete. Hexium
+currently reports **Virus scan —**; the workflow remains incomplete until the
+requested version shows **Scan successful**. Clean Gale profile and gameplay
+checks remain manual. See the [publication record](VALIDATION.md).
+
 ## Configuration and first publication
 
 GitHub **Settings → Secrets and variables → Actions** must contain:
@@ -14,13 +22,13 @@ GitHub **Settings → Secrets and variables → Actions** must contain:
 | Type | Name | Value / purpose |
 | --- | --- | --- |
 | Variable | `HEXIUM_NAMESPACE` | `randenko` |
-| Variable | `HEXIUM_PUBLISH_ENABLED` | Initially `false`; set to `true` after preflight succeeds. |
+| Variable | `HEXIUM_PUBLISH_ENABLED` | `true`; enabled by the owner after Actions preflight passed. |
 | Secret | `HEXIUM_API_TOKEN` | API token belonging to team `randenko`. |
 
 All three settings were present when implementation started; the token value
 was not retrieved. Preflight checks configuration presence, public dependencies,
-categories, and release assets using GET requests. Upload authorization is
-established by the first successful publication, rather than by preflight.
+categories, and release assets using GET requests. Upload and metadata-write
+authorization were established during the 1.1.0 publication.
 Keep credentials in environment variables or GitHub Secrets, never arguments,
 committed files, or chat messages.
 
@@ -32,11 +40,16 @@ committed files, or chat messages.
    Thunderstore and Nexus Mods switches at their existing values.
 4. Manually dispatch **v1.1.0** again with **Validate without uploading** disabled.
    Its earlier GitHub release event will not replay automatically.
+   The launch API upload created a **private** listing that returned 404 from
+   the public package API. If this happens, open the existing listing and choose
+   **⚙ → Make public**, then retry the workflow to complete metadata. Do not
+   upload the archive again while that listing is private. Hexium's documented
+   API does not expose a visibility control.
 5. Check the public listing, four screenshots, changelog, Jötunn dependency,
    client/server requirement, and version scan. Install using a clean Gale
    profile; verify BepInEx and Jötunn resolution, both Guild Chest DLLs at
    **1.1.0.0**, and a chest interaction in a disposable world.
-6. Add the verified listing URL to the README and saved
+6. The verified listing URL is included in the README and saved
    [YouTube description](media/youtube-description.txt). Updating the live video
    description remains manual. Record actual results in [validation](VALIDATION.md).
 
